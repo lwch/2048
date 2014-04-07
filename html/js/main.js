@@ -2,7 +2,7 @@
 
 /* config */
 var debug = 0;
-var server_address = "http://127.0.0.1/api/";
+var server_address = "http://2048.q-devel.com/api/";
 
 /* ajax */
 var ajax = {
@@ -13,7 +13,7 @@ var ajax = {
         if (window.XMLHttpRequest) xmlhttp = new XMLHttpRequest();
         else xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
 
-        var url = server_address + "?api_name=" + req.api_name;
+        var url = server_address + "?api_name=" + req.api_name + "&c=" + Math.random();
         if (req.params != undefined && req.params != null) {
             for (var key in req.params) {
                 url += "&" + key + "=" + req.params[key];
