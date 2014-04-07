@@ -23,6 +23,6 @@ do
     if ($table['grid'][$y][$x] == 0) ++$count;
     $table['grid'][$y][$x] = $val;
 } while ($count < 2);
-$table['lastmodify'] = time();
+$table['lastmodify'] = microtime(true);
 $grid->insert($table);
 

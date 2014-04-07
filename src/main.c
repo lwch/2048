@@ -276,28 +276,27 @@ static void new_game()
         case 'a':
         case 'A':
             rc = move_left(&win);
-            goto check;
+            break;
         case 'd':
         case 'D':
             rc = move_right(&win);
-            goto check;
+            break;
         case 'w':
         case 'W':
             rc = move_up(&win);
-            goto check;
+            break;
         case 's':
         case 'S':
             rc = move_down(&win);
-            goto check;
+            break;
         }
-        continue;
-check:
         if (rc)
         {
             left_size = search_left(left);
             rand_set(left, left_size);
             show_board();
-            if (!can_merge()) break;
+            left_size = search_left(left);
+            if (!can_merge() && left_size == 0) break;
         }
     }
     if (win) printf("you win!!!!!!!!!!\n");

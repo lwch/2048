@@ -23,12 +23,12 @@ var ajax = {
         if (req.callback != undefined && req.callback != null) {
             if (req.error_callback != undefined && req.error_callback != null) {
                 xmlhttp.onreadystatechange = function() {
-                    if (xmlhttp.readyState == 4 && xmlhttp.status == 200) req.callback(xmlhttp.responseText);
+                    if (xmlhttp.readyState == 4 && xmlhttp.status == 200) req.callback(eval("(" + xmlhttp.responseText + ")"));
                     else req.error_callback(xmlhttp);
                 };
             } else {
                 xmlhttp.onreadystatechange = function() {
-                    if (xmlhttp.readyState == 4 && xmlhttp.status == 200) req.callback(xmlhttp.responseText);
+                    if (xmlhttp.readyState == 4 && xmlhttp.status == 200) req.callback(eval("(" + xmlhttp.responseText + ")"));
                 }
             }
             xmlhttp.open("GET", url, true);
@@ -68,13 +68,39 @@ var grid = {
 
 /* service */
 var service = {
-    timmerId: undefined,
+    updateTimmerId: undefined,
+    leftTimmerId: undefined,
+    leftTime: 0,
+    updateLeft: function() {
+        var left_time = document.getElementById("left-time");
+        left_time.innerText = service.leftTime + "s";
+    },
     update: function() {
-        var res = ajax.request({
-            api_name: "2048.update"
+        ajax.request({
+            api_name: "2048.update",
+            callback: function(res) {
+                if (res.stat == 0) {
+                    service.leftTime = res.data.left;
+                    var last_poll_action = document.getElementById("last-poll-action");
+                    switch (res.data.action) {
+                    case direction_enum.up:
+                        last_poll_action.innerHTML = "&uarr;";
+                        break;
+                    case direction_enum.down:
+                        last_poll_action.innerHTML = "&darr;";
+                        break;
+                    case direction_enum.left:
+                        last_poll_action.innerHTML = "&larr;";
+                        break;
+                    case direction_enum.right:
+                        last_poll_action.innerHTML = "&rarr;";
+                        break;
+                    }
+                    grid.map = res.data.grid;
+                }
+                service.emit();
+            }
         });
-        if (res.stat == 0) grid.map = res.data;
-        service.emit();
     },
     emit: function() {
         /* clear */
@@ -111,7 +137,7 @@ var service = {
                 var val = Math.pow(2, parseInt((Math.random() * 100) % 16) + 1);
                 grid.map[y][x] = val;
             }
-            //window.clearInterval(this.timmerId);
+            //window.clearInterval(this.updateTimmerId);
         }*/
     }
 };
@@ -146,18 +172,36 @@ var input_manager = {
         }
     },
     emit: function(dir) {
+        var last_action = document.getElementById("last-action");
+        switch (dir) {
+        case direction_enum.up:
+            var tmp = "↑";
+            last_action.innerHTML = "&uarr;";
+            break;
+        case direction_enum.down:
+            last_action.innerHTML = "&darr;";
+            break;
+        case direction_enum.left:
+            last_action.innerHTML = "&larr;";
+            break;
+        case direction_enum.right:
+            last_action.innerHTML = "&rarr;";
+            break;
+        }
         ajax.request({
             api_name: "2048.action",
             params: {
                 dir: dir
-            }
+            },
+            callback: function(res) {}
         });
     }
 };
 
 window.onload = function() {
     document.addEventListener("keydown", input_manager.key_down);
-    service.timmerId = window.setInterval(service.update, 1000);
+    service.updateTimmerId = window.setInterval(service.update, 500);
+    service.leftTimmerId = window.setInterval(service.updateLeft, 100);
 }
 })();
 

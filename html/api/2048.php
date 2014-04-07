@@ -10,7 +10,13 @@ $direction_enum = array(
     'left' => 2,
     'right' => 3
 );
-$timeout = 10;
+$status_enum = array(
+    'move_success' => 0,
+    'move_fail'    => 1,
+    'win'          => 2,
+    'lose'         => 3
+);
+$timeout = 10.0;
 
 function _2048_search_left($grid) {
     $res = array();
@@ -31,8 +37,21 @@ function _2048_rand_set($left, $grid) {
     return $grid;
 }
 
+function _2048_can_merge($grid) {
+    for ($y = 0; $y < 4; ++$y) {
+        for ($x = 0; $x < 4; ++$x) {
+            if ($x > 0 && $grid[$y][$x] == $grid[$y][$x - 1]) return 1;
+            if ($x < 3 && $grid[$y][$x] == $grid[$y][$x + 1]) return 1;
+            if ($y > 0 && $grid[$y][$x] == $grid[$y - 1][$x]) return 1;
+            if ($y < 3 && $grid[$y][$x] == $grid[$y + 1][$x]) return 1;
+        }
+    }
+    return 0;
+}
+
 function _2048_move_up($grid) {
-    $done = 0;
+    GLOBAL $status_enum;
+    $done = $status_enum['move_fail'];
     for ($x1 = 0; $x1 < 4; ++$x1) {
         for ($y1 = 0; $y1 < 4; ++$y1) {
             if ($grid[$y1][$x1] == 0) { # 先做trim操作
@@ -44,7 +63,7 @@ function _2048_move_up($grid) {
                     }
                 }
                 if ($trim) {
-                    $done = 1;
+                    $done = $status_enum['move_success'];
                     for ($y2 = $y1 + 1; $y2 < 4; ++$y2) $grid[$y2 - 1][$x1] = $grid[$y2][$x1];
                     $grid[3][$x1] = 0;
                     if ($grid[$y1][$x1] == 0) --$y1;
@@ -53,9 +72,9 @@ function _2048_move_up($grid) {
         }
         for ($y1 = 0; $y1 < 3; ++$y1) {
             if ($grid[$y1][$x1] && $grid[$y1][$x1] == $grid[$y1 + 1][$x1]) {
-                $done = 1;
+                $done = $status_enum['move_success'];
                 $grid[$y1][$x1] <<= 1;
-                if ($grid[$y1][$x1] == 2048) $done = 2;
+                if ($grid[$y1][$x1] == 2048) $done = $status_enum['win'];
                 for ($y2 = $y1 + 2; $y2 < 4; ++$y2) $grid[$y2 - 1][$x1] = $grid[$y2][$x1];
                 $grid[3][$x1] = 0;
             }
@@ -66,7 +85,8 @@ function _2048_move_up($grid) {
 
 function _2048_move_down($grid)
 {
-    $done = 0;
+    GLOBAL $status_enum;
+    $done = $status_enum['move_fail'];
     for ($x1 = 0; $x1 < 4; ++$x1) {
         for ($y1 = 3; $y1 > 0; --$y1) {
             if ($grid[$y1][$x1] == 0) { # 先做trim操作
@@ -78,7 +98,7 @@ function _2048_move_down($grid)
                     }
                 }
                 if ($trim) {
-                    $done = 1;
+                    $done = $status_enum['move_success'];
                     for ($y2 = $y1 - 1; $y2 >= 0; --$y2) $grid[$y2 + 1][$x1] = $grid[$y2][$x1];
                     $grid[0][$x1] = 0;
                     if ($grid[$y1][$x1] == 0) ++$y1;
@@ -87,9 +107,9 @@ function _2048_move_down($grid)
         }
         for ($y1 = 3; $y1 > 0; --$y1) {
             if ($grid[$y1][$x1] && $grid[$y1][$x1] == $grid[$y1 - 1][$x1]) {
-                $done = 1;
+                $done = $status_enum['move_success'];
                 $grid[$y1][$x1] <<= 1;
-                if ($grid[$y1][$x1] == 2048) $done = 2;
+                if ($grid[$y1][$x1] == 2048) $done = $status_enum['win'];
                 for ($y2 = $y1 - 2; $y2 >= 0; --$y2) $grid[$y2 + 1][$x1] = $grid[$y2][$x1];
                 $grid[0][$x1] = 0;
             }
@@ -100,7 +120,8 @@ function _2048_move_down($grid)
 
 function _2048_move_left($grid)
 {
-    $done = 0;
+    GLOBAL $status_enum;
+    $done = $status_enum['move_fail'];
     for ($y1 = 0; $y1 < 4; ++$y1) {
         for ($x1 = 0; $x1 < 3; ++$x1) {
             if ($grid[$y1][$x1] == 0) { # 先做trim操作
@@ -112,7 +133,7 @@ function _2048_move_left($grid)
                     }
                 }
                 if ($trim) {
-                    $done = 1;
+                    $done = $status_enum['move_success'];
                     for ($x2 = $x1 + 1; $x2 < 4; ++$x2) $grid[$y1][$x2 - 1] = $grid[$y1][$x2];
                     $grid[$y1][3] = 0;
                     if ($grid[$y1][$x1] == 0) --$x1;
@@ -121,9 +142,9 @@ function _2048_move_left($grid)
         }
         for ($x1 = 0; $x1 < 3; ++$x1) {
             if ($grid[$y1][$x1] && $grid[$y1][$x1] == $grid[$y1][$x1 + 1]) {
-                $done = 1;
+                $done = $status_enum['move_success'];
                 $grid[$y1][$x1] <<= 1;
-                if ($grid[$y1][$x1] == 2048) $done = 2;
+                if ($grid[$y1][$x1] == 2048) $done = $status_enum['win'];
                 for ($x2 = $x1 + 2; $x2 < 4; ++$x2) $grid[$y1][$x2 - 1] = $grid[$y1][$x2];
                 $grid[$y1][3] = 0;
             }
@@ -134,7 +155,8 @@ function _2048_move_left($grid)
 
 function _2048_move_right($grid)
 {
-    $done = 0;
+    GLOBAL $status_enum;
+    $done = $status_enum['move_fail'];
     for ($y1 = 0; $y1 < 4; ++$y1) {
         for ($x1 = 3; $x1 > 0; --$x1) {
             if ($grid[$y1][$x1] == 0) { # 先做trim操作
@@ -146,7 +168,7 @@ function _2048_move_right($grid)
                     }
                 }
                 if ($trim) {
-                    $done = 1;
+                    $done = $status_enum['move_success'];
                     for ($x2 = $x1 - 1; $x2 >= 0; --$x2) $grid[$y1][$x2 + 1] = $grid[$y1][$x2];
                     $grid[$y1][0] = 0;
                     if ($grid[$y1][$x1] == 0) ++$x1;
@@ -155,9 +177,9 @@ function _2048_move_right($grid)
         }
         for ($x1 = 3; $x1 > 0; --$x1) {
             if ($grid[$y1][$x1] && $grid[$y1][$x1] == $grid[$y1][$x1 - 1]) {
-                $done = 1;
+                $done = $status_enum['move_success'];
                 $grid[$y1][$x1] <<= 1;
-                if ($grid[$y1][$x1] == 2048) $done = 2;
+                if ($grid[$y1][$x1] == 2048) $done = $status_enum['win'];
                 for ($x2 = $x1 - 2; $x2 >= 0; --$x2) $grid[$y1][$x2 + 1] = $grid[$y1][$x2];
                 $grid[$y1][0] = 0;
             }
@@ -168,54 +190,106 @@ function _2048_move_right($grid)
 
 function _2048_do_action($grid, $dir) {
     GLOBAL $direction_enum;
+    GLOBAL $status_enum;
     switch ($dir) {
     case $direction_enum['up']:
-        return _2048_move_up($grid);
+        $res = _2048_move_up($grid);
+        break;
     case $direction_enum['down']:
-        return _2048_move_down($grid);
+        $res = _2048_move_down($grid);
+        break;
     case $direction_enum['left']:
-        return _2048_move_left($grid);
+        $res = _2048_move_left($grid);
+        break;
     case $direction_enum['right']:
-        return _2048_move_right($grid);
+        $res = _2048_move_right($grid);
+        break;
     }
+    if ($res[0] == $status_enum['move_success']) {
+        $left = _2048_search_left($res[1]);
+        $grid = _2048_rand_set($left, $res[1]);
+        $left = _2048_search_left($grid);
+        if (count($left) || _2048_can_merge($grid)) {
+            return array($status_enum['move_success'], $grid);
+        } else {
+            return array($status_enum['lose'], $grid);
+        }
+    }
+    return $res;
+}
+
+function _2048_new_game($grid) {
+    $grid->remove();
+    $table = array(
+        'grid' => array(
+            array(0, 0, 0, 0),
+            array(0, 0, 0, 0),
+            array(0, 0, 0, 0),
+            array(0, 0, 0, 0)
+        ),
+        'status' => 'done'
+    );
+
+    $count = 0;
+    do
+    {
+        $x = mt_rand(0, 3);
+        $y = mt_rand(0, 3);
+        $val = pow(2, mt_rand(1, 2));
+        if ($table['grid'][$y][$x] == 0) ++$count;
+        $table['grid'][$y][$x] = $val;
+    } while ($count < 2);
+    $table['lastmodify'] = microtime(true);
+    $grid->insert($table);
 }
 
 function _2048_check_action($grid, $oplog) {
     GLOBAL $direction_enum;
     GLOBAL $timeout;
+    GLOBAL $status_enum;
     $grid_res = $grid->findOne();
-    $res = $oplog->find(array('type' => 'move', 'time' => array('$gt' => $grid_res['lastmodify'])));
-    if ($res->count()) {
-        while ($grid_res['status'] != 'done') $grid_res = $grid->findOne();
-        if (time() - $grid_res['lastmodify'] < $timeout) return;
-        $grid->update(array('_id' => $grid_res['_id']), array('$set' => array('status' => 'updating')));
-        $counts = array('up', 'down', 'left', 'right');
-        $max = array('count' => 0); # array('count' => count, 'dir' => dir)
-        foreach ($counts as $v) {
-            $qry = array('type' => 'move', 'time' => array('$gt' => $grid_res['lastmodify']), 'dir' => $direction_enum[$v]);
-            $count = $oplog->count($qry);
-            if ($count > $max['count']) {
-                $max['count'] = $count;
-                $max['dir'] = $direction_enum[$v];
+    if ($grid_res['status'] == 'waiting') {
+        if (microtime(true) - $grid_res['lastmodify'] < $timeout) return; # 胜利或失败想让他看到结果
+        _2048_new_game($grid);
+    } else {
+        $res = $oplog->find(array('type' => 'move', 'time' => array('$gt' => $grid_res['lastmodify'])));
+        if ($res->count()) { # 若有人做了操作
+            while ($grid_res['status'] == 'updating') $grid_res = $grid->findOne();
+            if (microtime(true) - $grid_res['lastmodify'] < $timeout) return; # 若还没到统计时间
+            $grid->update(array('_id' => $grid_res['_id']), array('$set' => array('status' => 'updating')));
+            $counts = array('up', 'down', 'left', 'right');
+            $max = array('count' => 0); # array('count' => count, 'dir' => dir)
+            foreach ($counts as $v) { # 统计出所选方向最多的那个方向
+                $qry = array('type' => 'move', 'time' => array('$gt' => $grid_res['lastmodify']), 'dir' => $direction_enum[$v]);
+                $count = $oplog->count($qry);
+                if ($count > $max['count']) {
+                    $max['count'] = $count;
+                    $max['dir'] = $direction_enum[$v];
+                }
             }
-        }
-        $g = $grid_res['grid'];
-        list($status, $g) = _2048_do_action($g, $max['dir']);
-        if ($status) {
-            if ($status == 1) {
-                $left = _2048_search_left($g);
-                $g = _2048_rand_set($left, $g);
-                $grid->update(array('_id' => $grid_res['_id']), array('$set' => array('status' => 'done', 'lastmodify' => time(), 'grid' => $g)));
-            } else { # win
-                # TODO
+            $g = $grid_res['grid'];
+            list($status, $g) = _2048_do_action($g, $max['dir']);
+            switch ($status) {
+            case $status_enum['move_success']:
+                $grid->update(array('_id' => $grid_res['_id']), array('$set' => array('status' => 'done', 'lastmodify' => microtime(true), 'grid' => $g, 'lastaction' => $max['dir'])));
+                break;
+            case $status_enum['move_fail']:
+                $grid->update(array('_id' => $grid_res['_id']), array('$set' => array('status' => 'done', 'lastmodify' => microtime(true), 'lastaction' => $max['dir'])));
+                break;
+            case $status_enum['win']:
+            case $status_enum['lose']:
+                $grid->update(array('_id' => $grid_res['_id']), array('$set' => array('status' => 'waiting', 'lastmodify' => microtime(true), 'grid' => $g)));
+                break;
             }
-        } else {
-            $grid->update(array('_id' => $grid_res['_id']), array('$set' => array('status' => 'done', 'lastmodify' => time())));
+        } else if (microtime(true) - $grid_res['lastmodify'] > $timeout) { # 统计时间内没人操作，重设lastmodify
+            $grid->update(array('_id' => $grid_res['_id']), array('$set' => array('lastmodify' => microtime(true))));
         }
     }
 }
 
 function _2048_update() {
+    GLOBAL $direction_enum;
+    GLOBAL $timeout;
     $mongo = mongo();
     $db = $mongo->_2048;
     $grid = $db->grid;
@@ -225,12 +299,13 @@ function _2048_update() {
     do
     {
         $res = $grid->findOne();
-        if ($res['status'] == 'done') {
+        if ($res['status'] != 'updating') {
             unset($res['_id']);
             break;
         }
     } while (1);
-    return array('stat' => 0, 'data' => $res['grid']);
+    $last_action = isset($res['lastaction']) ? $res['lastaction'] : $direction_enum['up'];
+    return array('stat' => 0, 'data' => array('grid' => $res['grid'], 'action' => $last_action, 'left' => floor($timeout - microtime(true) + $res['lastmodify'])));
 }
 
 function _2048_action() {
@@ -239,7 +314,7 @@ function _2048_action() {
     $mongo = mongo();
     $db = $mongo->_2048;
     $oplog = $db->oplog;
-    $done = $oplog->insert(array('type' => 'move', 'time' => time(), 'dir' => intval($dir)));
+    $oplog->insert(array('type' => 'move', 'time' => microtime(true), 'dir' => intval($dir)));
     return array('stat' => 0, 'data' => array());
 }
 
