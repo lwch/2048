@@ -4,6 +4,7 @@ require_once(__DIR__.'/2048.php');
 
 if (!isset($_REQUEST['api_name'])) {
     echo json_encode(array('stat' => 101, 'data' => array(), 'msg' => 'error call'));
+    exit;
 }
 $api_name = $_REQUEST['api_name'];
 switch ($api_name) {
