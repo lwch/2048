@@ -218,7 +218,7 @@ function _2048_do_action($grid, $dir) {
     return $res;
 }
 
-function _2048_new_game($grid) {
+function _2048_new_game($grid, $history) {
     $grid->remove();
     $table = array(
         'grid' => array(
@@ -241,16 +241,17 @@ function _2048_new_game($grid) {
     } while ($count < 2);
     $table['lastmodify'] = microtime(true);
     $grid->insert($table);
+    $history->insert(array('id' => $table['_id'], 'type' => 'new_game', 'grid' => $table['grid'], 'time' => time()));
 }
 
-function _2048_check_action($grid, $oplog) {
+function _2048_check_action($grid, $oplog, $history) {
     GLOBAL $direction_enum;
     GLOBAL $timeout;
     GLOBAL $status_enum;
     $grid_res = $grid->findOne();
     if ($grid_res['status'] == 'waiting') {
         if (microtime(true) - $grid_res['lastmodify'] < $timeout) return; # 胜利或失败想让他看到结果
-        _2048_new_game($grid);
+        _2048_new_game($grid, $history);
     } else {
         $res = $oplog->find(array('type' => 'move', 'time' => array('$gt' => $grid_res['lastmodify'])));
         if ($res->count()) { # 若有人做了操作
@@ -272,6 +273,7 @@ function _2048_check_action($grid, $oplog) {
             switch ($status) {
             case $status_enum['move_success']:
                 $grid->update(array('_id' => $grid_res['_id']), array('$set' => array('status' => 'done', 'lastmodify' => microtime(true), 'grid' => $g, 'lastaction' => $max['dir'])));
+                $history->insert(array('type' => 'move', 'grid' => $g, 'time' => time(), 'dir' => $max['dir'], 'ref' => $grid_res['_id']));
                 break;
             case $status_enum['move_fail']:
                 $grid->update(array('_id' => $grid_res['_id']), array('$set' => array('status' => 'done', 'lastmodify' => microtime(true), 'lastaction' => $max['dir'])));
@@ -279,6 +281,7 @@ function _2048_check_action($grid, $oplog) {
             case $status_enum['win']:
             case $status_enum['lose']:
                 $grid->update(array('_id' => $grid_res['_id']), array('$set' => array('status' => 'waiting', 'lastmodify' => microtime(true), 'grid' => $g)));
+                $history->insert(array('type' => ($status == $status_enum['win'] ? 'win' : 'lose'), 'grid' => $g, 'time' => time(), 'ref' => $grid_res['_id']));
                 break;
             }
         } else if (microtime(true) - $grid_res['lastmodify'] > $timeout) { # 统计时间内没人操作，重设lastmodify
@@ -294,8 +297,9 @@ function _2048_update() {
     $db = $mongo->_2048;
     $grid = $db->grid;
     $oplog = $db->oplog;
+    $history = $db->history;
 
-    _2048_check_action($grid, $oplog);
+    _2048_check_action($grid, $oplog, $history);
     do
     {
         $res = $grid->findOne();

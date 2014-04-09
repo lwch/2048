@@ -3,6 +3,7 @@
 /* config */
 var debug = 0;
 var server_address = "http://2048.q-devel.com/api/";
+//var server_address = "http://127.0.0.1/api/";
 
 /* ajax */
 var ajax = {
@@ -175,7 +176,6 @@ var input_manager = {
         var last_action = document.getElementById("last-action");
         switch (dir) {
         case direction_enum.up:
-            var tmp = "↑";
             last_action.innerHTML = "&uarr;";
             break;
         case direction_enum.down:

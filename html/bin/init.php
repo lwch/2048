@@ -3,6 +3,7 @@ $mongo = new MongoClient();
 $db = $mongo->_2048;
 $grid = $db->grid;
 $grid->remove();
+$history = $db->history;
 
 $table = array(
     'grid' => array(
@@ -25,4 +26,5 @@ do
 } while ($count < 2);
 $table['lastmodify'] = microtime(true);
 $grid->insert($table);
+$history->insert(array('id' => $table['_id'], 'type' => 'new_game', 'grid' => $table['grid'], 'time' => time()));
 
