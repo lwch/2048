@@ -11,9 +11,14 @@ body {
     margin: 80px 0;
 }
 
-.main-frame {
+.history-frame {
+    width: 200px;
+    float: left;
+}
+
+.game-frame {
     width: 540px;
-    margin: 0 auto;
+    float: left;
 }
 
 .header-frame {
