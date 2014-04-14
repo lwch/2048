@@ -16,7 +16,7 @@ $status_enum = array(
     'win'          => 2,
     'lose'         => 3
 );
-$timeout = 5.0;
+$timeout = 3.0;
 
 function _2048_search_left($grid) {
     $res = array();
@@ -327,7 +327,7 @@ function _2048_history() {
     $db = $mongo->_2048;
     $history = $db->history;
 
-    $res = $history->find(array('type' => 'win', 'type' => 'lose'));#->sort(array('time' => -1));
+    $res = $history->find(array('type' => 'win', 'type' => 'lose'))->sort(array('time' => -1));
     $data = array();
     foreach ($res as $i) {
         $data[] = array('type' => $i['type'], 'score' => $i['score'], 'time' => $i['time']);

@@ -78,6 +78,26 @@ var service = {
         left_time.innerText = service.leftTime + "s";
     },
     updateHistory: function() {
+        Date.prototype.format = function(format) {
+            var date = {
+                "M+": this.getMonth() + 1,
+                "d+": this.getDate(),
+                "h+": this.getHours(),
+                "m+": this.getMinutes(),
+                "s+": this.getSeconds(),
+                "q+": Math.floor((this.getMonth() + 3) / 3),
+                "S+": this.getMilliseconds()
+            };
+            if (/(y+)/i.test(format)) {
+                format = format.replace(RegExp.$1, (this.getFullYear() + '').substr(4 - RegExp.$1.length));
+            }
+            for (var k in date) {
+                if (new RegExp("(" + k + ")").test(format)) {
+                    format = format.replace(RegExp.$1, RegExp.$1.length == 1 ? date[k] : ("00" + date[k]).substr(("" + date[k]).length));
+                }
+            }
+            return format;
+        }
         ajax.request({
             api_name: "2048.history",
             callback: function(res) {
@@ -102,7 +122,7 @@ var service = {
 
                         var div_right = document.createElement("div");
                         div_right.className = "right";
-                        div_right.innerText = time.getFullYear()+"-"+(time.getMonth()+1)+"-"+time.getDate()+" "+time.getHours()+":"+time.getMinutes()+":"+time.getSeconds();
+                        div_right.innerText = time.format("yyyy-MM-dd hh:mm:ss");
                         li.appendChild(div_right);
 
                         scores_frame.appendChild(li);
