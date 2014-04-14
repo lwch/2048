@@ -12,11 +12,38 @@ body {
 }
 
 .history-frame {
-    width: 200px;
+    width: 300px;
+    margin-top: 40px;
     float: left;
 }
 
+.history-frame li {
+    margin-left: 10px;
+    margin-right: 10px;
+    font-size: 14px;
+    font-weight: bold;
+    list-style-type: none;
+}
+
+.history-frame .left {
+    display: inline;
+}
+
+.history-frame .right {
+    float: right;
+    display: inline;
+}
+
+.history-frame .win {
+    color: red;
+}
+
+.history-frame .lose {
+    color: gray;
+}
+
 .game-frame {
+    margin-left: 60px;
     width: 540px;
     float: left;
 }
@@ -64,7 +91,7 @@ body {
 }
 
 .score {
-    font-size: 25px;
+    font-size: 18px;
     height: 25px;
     line-height: 30px;
 }

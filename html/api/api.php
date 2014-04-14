@@ -11,6 +11,9 @@ switch ($api_name) {
 case '2048.update':
     $res = _2048_update();
     break;
+case '2048.history':
+    $res = _2048_history();
+    break;
 case '2048.action':
     $res = _2048_action();
     break;

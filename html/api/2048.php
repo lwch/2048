@@ -52,6 +52,7 @@ function _2048_can_merge($grid) {
 function _2048_move_up($grid) {
     GLOBAL $status_enum;
     $done = $status_enum['move_fail'];
+    $score = 0;
     for ($x1 = 0; $x1 < 4; ++$x1) {
         for ($y1 = 0; $y1 < 4; ++$y1) {
             if ($grid[$y1][$x1] == 0) { # 先做trim操作
@@ -74,19 +75,21 @@ function _2048_move_up($grid) {
             if ($grid[$y1][$x1] && $grid[$y1][$x1] == $grid[$y1 + 1][$x1]) {
                 $done = $status_enum['move_success'];
                 $grid[$y1][$x1] <<= 1;
+                $score += $grid[$y1][$x1];
                 if ($grid[$y1][$x1] == 2048) $done = $status_enum['win'];
                 for ($y2 = $y1 + 2; $y2 < 4; ++$y2) $grid[$y2 - 1][$x1] = $grid[$y2][$x1];
                 $grid[3][$x1] = 0;
             }
         }
     }
-    return array($done, $grid);
+    return array($done, $grid, $score);
 }
 
 function _2048_move_down($grid)
 {
     GLOBAL $status_enum;
     $done = $status_enum['move_fail'];
+    $score = 0;
     for ($x1 = 0; $x1 < 4; ++$x1) {
         for ($y1 = 3; $y1 > 0; --$y1) {
             if ($grid[$y1][$x1] == 0) { # 先做trim操作
@@ -109,19 +112,21 @@ function _2048_move_down($grid)
             if ($grid[$y1][$x1] && $grid[$y1][$x1] == $grid[$y1 - 1][$x1]) {
                 $done = $status_enum['move_success'];
                 $grid[$y1][$x1] <<= 1;
+                $score += $grid[$y1][$x1];
                 if ($grid[$y1][$x1] == 2048) $done = $status_enum['win'];
                 for ($y2 = $y1 - 2; $y2 >= 0; --$y2) $grid[$y2 + 1][$x1] = $grid[$y2][$x1];
                 $grid[0][$x1] = 0;
             }
         }
     }
-    return array($done, $grid);
+    return array($done, $grid, $score);
 }
 
 function _2048_move_left($grid)
 {
     GLOBAL $status_enum;
     $done = $status_enum['move_fail'];
+    $score = 0;
     for ($y1 = 0; $y1 < 4; ++$y1) {
         for ($x1 = 0; $x1 < 3; ++$x1) {
             if ($grid[$y1][$x1] == 0) { # 先做trim操作
@@ -144,19 +149,21 @@ function _2048_move_left($grid)
             if ($grid[$y1][$x1] && $grid[$y1][$x1] == $grid[$y1][$x1 + 1]) {
                 $done = $status_enum['move_success'];
                 $grid[$y1][$x1] <<= 1;
+                $score += $grid[$y1][$x1];
                 if ($grid[$y1][$x1] == 2048) $done = $status_enum['win'];
                 for ($x2 = $x1 + 2; $x2 < 4; ++$x2) $grid[$y1][$x2 - 1] = $grid[$y1][$x2];
                 $grid[$y1][3] = 0;
             }
         }
     }
-    return array($done, $grid);
+    return array($done, $grid, $score);
 }
 
 function _2048_move_right($grid)
 {
     GLOBAL $status_enum;
     $done = $status_enum['move_fail'];
+    $score = 0;
     for ($y1 = 0; $y1 < 4; ++$y1) {
         for ($x1 = 3; $x1 > 0; --$x1) {
             if ($grid[$y1][$x1] == 0) { # 先做trim操作
@@ -179,13 +186,14 @@ function _2048_move_right($grid)
             if ($grid[$y1][$x1] && $grid[$y1][$x1] == $grid[$y1][$x1 - 1]) {
                 $done = $status_enum['move_success'];
                 $grid[$y1][$x1] <<= 1;
+                $score += $grid[$y1][$x1];
                 if ($grid[$y1][$x1] == 2048) $done = $status_enum['win'];
                 for ($x2 = $x1 - 2; $x2 >= 0; --$x2) $grid[$y1][$x2 + 1] = $grid[$y1][$x2];
                 $grid[$y1][0] = 0;
             }
         }
     }
-    return array($done, $grid);
+    return array($done, $grid, $score);
 }
 
 function _2048_do_action($grid, $dir) {
@@ -210,7 +218,7 @@ function _2048_do_action($grid, $dir) {
         $grid = _2048_rand_set($left, $res[1]);
         $left = _2048_search_left($grid);
         if (count($left) || _2048_can_merge($grid)) {
-            return array($status_enum['move_success'], $grid);
+            return array($status_enum['move_success'], $grid, $res[2]);
         } else {
             return array($status_enum['lose'], $grid);
         }
@@ -227,6 +235,7 @@ function _2048_new_game($grid, $history) {
             array(0, 0, 0, 0),
             array(0, 0, 0, 0)
         ),
+        'score' => 0,
         'status' => 'done'
     );
 
@@ -269,10 +278,11 @@ function _2048_check_action($grid, $oplog, $history) {
                 }
             }
             $g = $grid_res['grid'];
-            list($status, $g) = _2048_do_action($g, $max['dir']);
+            $res = _2048_do_action($g, $max['dir']);
+            list($status, $g) = $res;
             switch ($status) {
             case $status_enum['move_success']:
-                $grid->update(array('_id' => $grid_res['_id']), array('$set' => array('status' => 'done', 'lastmodify' => microtime(true), 'grid' => $g, 'lastaction' => $max['dir'])));
+                $grid->update(array('_id' => $grid_res['_id']), array('$set' => array('status' => 'done', 'score' => $grid_res['score'] + $res[2], 'lastmodify' => microtime(true), 'grid' => $g, 'lastaction' => $max['dir'])));
                 $history->insert(array('type' => 'move', 'grid' => $g, 'time' => time(), 'dir' => $max['dir'], 'ref' => $grid_res['_id']));
                 break;
             case $status_enum['move_fail']:
@@ -281,7 +291,7 @@ function _2048_check_action($grid, $oplog, $history) {
             case $status_enum['win']:
             case $status_enum['lose']:
                 $grid->update(array('_id' => $grid_res['_id']), array('$set' => array('status' => 'waiting', 'lastmodify' => microtime(true), 'grid' => $g)));
-                $history->insert(array('type' => ($status == $status_enum['win'] ? 'win' : 'lose'), 'grid' => $g, 'time' => time(), 'ref' => $grid_res['_id']));
+                $history->insert(array('type' => ($status == $status_enum['win'] ? 'win' : 'lose'), 'grid' => $g, 'score' => $grid_res['score'], 'time' => time(), 'ref' => $grid_res['_id']));
                 break;
             }
         } else if (microtime(true) - $grid_res['lastmodify'] > $timeout) { # 统计时间内没人操作，重设lastmodify
@@ -309,7 +319,20 @@ function _2048_update() {
         }
     } while (1);
     $last_action = isset($res['lastaction']) ? $res['lastaction'] : $direction_enum['up'];
-    return array('stat' => 0, 'data' => array('grid' => $res['grid'], 'action' => $last_action, 'left' => floor($timeout - microtime(true) + $res['lastmodify'])));
+    return array('stat' => 0, 'data' => array('grid' => $res['grid'], 'score' => $res['score'], 'action' => $last_action, 'left' => floor($timeout - microtime(true) + $res['lastmodify'])));
+}
+
+function _2048_history() {
+    $mongo = mongo();
+    $db = $mongo->_2048;
+    $history = $db->history;
+
+    $res = $history->find(array('type' => 'win', 'type' => 'lose'));#->sort(array('time' => -1));
+    $data = array();
+    foreach ($res as $i) {
+        $data[] = array('type' => $i['type'], 'score' => $i['score'], 'time' => $i['time']);
+    }
+    return array('stat' => 0, 'data' => $data);
 }
 
 function _2048_action() {

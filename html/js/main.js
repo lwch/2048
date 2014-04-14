@@ -71,10 +71,45 @@ var grid = {
 var service = {
     updateTimmerId: undefined,
     leftTimmerId: undefined,
+    historyTimmerId: undefined,
     leftTime: 0,
     updateLeft: function() {
         var left_time = document.getElementById("left-time");
         left_time.innerText = service.leftTime + "s";
+    },
+    updateHistory: function() {
+        ajax.request({
+            api_name: "2048.history",
+            callback: function(res) {
+                if (res.stat == 0) {
+                    var scores_frame = document.getElementById("scores-frame");
+                    var childs = scores_frame.childNodes;
+                    for (var i = childs.length - 1; i >= 0; --i) {
+                        scores_frame.removeChild(childs[i]);
+                    }
+
+                    for (var i = 0; i < res.data.length; ++i) {
+                        var li = document.createElement("li");
+                        var pre = res.data[i];
+                        var time = new Date(pre.time * 1000);
+                        if (pre.type == "win") li.className = "win";
+                        else li.className = "lose";
+
+                        var div_left = document.createElement("div");
+                        div_left.className = "left";
+                        div_left.innerText = pre.score;
+                        li.appendChild(div_left);
+
+                        var div_right = document.createElement("div");
+                        div_right.className = "right";
+                        div_right.innerText = time.getFullYear()+"-"+(time.getMonth()+1)+"-"+time.getDate()+" "+time.getHours()+":"+time.getMinutes()+":"+time.getSeconds();
+                        li.appendChild(div_right);
+
+                        scores_frame.appendChild(li);
+                    }
+                }
+            }
+        });
     },
     update: function() {
         ajax.request({
@@ -82,6 +117,8 @@ var service = {
             callback: function(res) {
                 if (res.stat == 0) {
                     service.leftTime = res.data.left;
+                    var score = document.getElementById("score");
+                    score.innerText = res.data.score;
                     var last_poll_action = document.getElementById("last-poll-action");
                     switch (res.data.action) {
                     case direction_enum.up:
@@ -168,6 +205,7 @@ var input_manager = {
         var modifiers = event.altKey || event.ctrlKey || event.metaKey || event.shiftKey;
         var which = input_manager.char_map[event.which];
         if (!modifiers && which !== undefined) {
+            event.preventDefault();
             if (debug && which == 999) grid.debug();
             else input_manager.emit(which);
         }
@@ -202,6 +240,7 @@ window.onload = function() {
     document.addEventListener("keydown", input_manager.key_down);
     service.updateTimmerId = window.setInterval(service.update, 500);
     service.leftTimmerId = window.setInterval(service.updateLeft, 100);
+    service.historyTimmerId = window.setInterval(service.updateHistory, 1000);
 }
 })();
 

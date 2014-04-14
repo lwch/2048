@@ -12,6 +12,7 @@ $table = array(
         array(0, 0, 0, 0),
         array(0, 0, 0, 0)
     ),
+    'score' => 0,
     'status' => 'done'
 );
 
