@@ -16,7 +16,7 @@ $status_enum = array(
     'win'          => 2,
     'lose'         => 3
 );
-$timeout = 10.0;
+$timeout = 5.0;
 
 function _2048_search_left($grid) {
     $res = array();
