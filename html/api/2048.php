@@ -122,7 +122,7 @@ function _2048_move_down($grid)
     return array($done, $grid, $score);
 }
 
-function _2048_move_left($grid)
+function _2048_move_right($grid)
 {
     GLOBAL $status_enum;
     $done = $status_enum['move_fail'];
@@ -159,7 +159,7 @@ function _2048_move_left($grid)
     return array($done, $grid, $score);
 }
 
-function _2048_move_right($grid)
+function _2048_move_left($grid)
 {
     GLOBAL $status_enum;
     $done = $status_enum['move_fail'];

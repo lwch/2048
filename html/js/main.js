@@ -4,6 +4,7 @@
 var debug = 0;
 var server_address = "http://2048.q-devel.com/api/";
 //var server_address = "http://127.0.0.1/api/";
+//var server_address = "http://192.168.66.64/api/";
 
 /* ajax */
 var ajax = {
@@ -148,10 +149,10 @@ var service = {
                         last_poll_action.innerHTML = "&darr;";
                         break;
                     case direction_enum.left:
-                        last_poll_action.innerHTML = "&larr;";
+                        last_poll_action.innerHTML = "&rarr;";
                         break;
                     case direction_enum.right:
-                        last_poll_action.innerHTML = "&rarr;";
+                        last_poll_action.innerHTML = "&larr;";
                         break;
                     }
                     grid.map = res.data.grid;
@@ -209,11 +210,19 @@ var direction_enum = {
 };
 
 var input_manager = {
+    touch_begin: {
+        x: 0,
+        y: 0
+    },
+    touch_end: {
+        x: 0,
+        y: 0
+    },
     char_map: {
         38: direction_enum.up,
         40: direction_enum.down,
-        37: direction_enum.left,
-        39: direction_enum.right,
+        37: direction_enum.right,
+        39: direction_enum.left,
         87: direction_enum.up,   // W
         83: direction_enum.down, // S
         65: direction_enum.left, // A
@@ -230,6 +239,30 @@ var input_manager = {
             else input_manager.emit(which);
         }
     },
+    touch_down: function(event) {
+        event.preventDefault();
+        if (!event.touches.length) return;
+        var touch = event.touches[0];
+        input_manager.touch_begin.x = touch.pageX;
+        input_manager.touch_begin.y = touch.pageY;
+    },
+    touch_move: function(event) {
+        event.preventDefault();
+        if (!event.touches.length) return;
+        var touch = event.touches[0];
+        input_manager.touch_end.x = touch.pageX;
+        input_manager.touch_end.y = touch.pageY;
+    },
+    touch_up: function(event) {
+        var angle = Math.atan2(input_manager.touch_begin.y - input_manager.touch_end.y, input_manager.touch_end.x - input_manager.touch_begin.x);
+        var which = direction_enum.up;
+        if (Math.abs(angle) <= Math.PI / 4) which = direction_enum.left;
+        else if (Math.abs(angle) <= Math.PI * 3 / 4) {
+            if (angle > 0) which = direction_enum.up;
+            else which = direction_enum.down;
+        } else which = direction_enum.right;
+        input_manager.emit(which);
+    },
     emit: function(dir) {
         var last_action = document.getElementById("last-action");
         switch (dir) {
@@ -240,10 +273,10 @@ var input_manager = {
             last_action.innerHTML = "&darr;";
             break;
         case direction_enum.left:
-            last_action.innerHTML = "&larr;";
+            last_action.innerHTML = "&rarr;";
             break;
         case direction_enum.right:
-            last_action.innerHTML = "&rarr;";
+            last_action.innerHTML = "&larr;";
             break;
         }
         ajax.request({
@@ -258,6 +291,12 @@ var input_manager = {
 
 window.onload = function() {
     document.addEventListener("keydown", input_manager.key_down);
+
+    var gamer = document.getElementById("gamer");
+    gamer.addEventListener("touchstart", input_manager.touch_down);
+    gamer.addEventListener("touchmove", input_manager.touch_move);
+    gamer.addEventListener("touchend", input_manager.touch_up);
+
     service.updateTimmerId = window.setInterval(service.update, 500);
     service.leftTimmerId = window.setInterval(service.updateLeft, 100);
     service.historyTimmerId = window.setInterval(service.updateHistory, 1000);
